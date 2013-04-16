@@ -1,12 +1,21 @@
 #include <stdio.h>
 #include <stdlib.h>
+
 struct linkedlist{
 	int data;
 	struct linkedlist *next;
 	struct linkedlist *prev;
+	void (*order[3])(struct linkedlist*);
 };
 typedef	struct linkedlist LINKEDLIST;
 typedef LINKEDLIST *LINK;
+
+LINK newlist( int data );
+void heapTree( LINK *node, int data );
+void preorder( LINK node );
+void postorder( LINK node );
+void inorder( LINK node );
+
 
 LINK newList( int data ){
 	LINK list;
@@ -14,12 +23,10 @@ LINK newList( int data ){
 	list->data = data;
 	list->next = NULL;
 	list->prev = NULL;
+	list->order[0] = preorder;
+	list->order[1] = inorder;
+	list->order[2] = postorder;
 	return list;
-}
-LINK newListNode(LINK node, int data){
-	node = (LINK)malloc(sizeof(LINKEDLIST));
-	node->data = data;
-	return node;
 }
 void appendList( LINK list, LINK argu ){
 	list->next->prev = argu;
@@ -56,31 +63,91 @@ void init( LINK head, LINK tail ){
 }
 /*--------------------------------------------------------------------------*/
 /*--------------------------------------------------------------------------*/
-void appendTree( LINK head, int data ){
-	if( head == NULL ){
-//		head = newList(data);
-		head= (LINK)malloc(sizeof(LINKEDLIST));
-		head->data = data;
-	}else{
-		if(head->prev == NULL){
-			appendTree( head->prev, data );
-		}else if(head->next == NULL){
-			appendTree( head->next, data );
-		}
-	}
-}
-void heapTree( LINK *node, int data ){
+void appendTree( LINK *node, int data ){
 	if( *node == NULL ){
 		*node = newList(data);
 	}else{
 		if( (*node)->data > data ){
-			heapTree( &((*node)->prev) , data );
+			appendTree( &(*node)->prev, data );
 		}else{
-			heapTree( &((*node)->next) , data );
+			appendTree( &(*node)->next, data );
 		}
 	}
 }
 
+bool insertNode( LINK *node, int data ){
+	if( *node == NULL ){
+		*node = newList(data);
+		return true;
+	}else{
+		if( (*node)->data > data ){
+			insertNode( &(*node)->prev , data );
+		}else{
+			insertNode( &(*node)->next , data );
+		}
+	}
+}
+LINK searchNode( LINK *node,LINK *parentnode, int data ){
+	if( (*node)->data == data ){
+		return *node;
+	}else{
+		if( (*node)->data > data ){
+			*parentnode = *node;
+			if(&(*node)->prev != NULL){
+				searchNode( &(*node)->prev ,parentnode, data );
+			}
+			else
+				return NULL;
+		}else{
+			*parentnode = *node;
+			if(&(*node)->next!= NULL){
+				searchNode( &(*node)->next ,parentnode, data );
+			}
+			else
+				return NULL;
+		}
+	}
+}
+
+LINK maxNode( LINK *node ){
+	LINK max = *node;
+	while(max->next != NULL){
+		max = max->next;
+	}
+	return max;
+}
+
+LINK minNode( LINK *node ){
+	LINK min = *node;
+	while(min->prev != NULL){
+		min = min->prev;
+	}
+	return min;
+}
+
+bool deleteNode( LINK *node, int data ){
+	LINK parent;
+	LINK result = searchNode(node,&parent,data);
+	if( result->prev == NULL && result->next == NULL ){
+		free(result);
+	}
+	else if( result->prev != NULL && result->next == NULL ){
+		if(parent->prev == result){
+
+		}else{
+
+		}
+	}
+	else if( result->prev == NULL && result->next != NULL ){
+		if(parent->prev == result){
+
+		}else{
+
+		}
+	}
+	else{
+	}
+}
 void preorder( LINK node ){
 	if(node->data != NULL)
 		printf("%d",node->data);
@@ -106,31 +173,26 @@ void inorder( LINK node ){
 		printf("%d",node->data);
 	if(node->next != NULL)
 		preorder(node->next);
+
 }
 
 void main(void){
 	LINK root = NULL;//= (LINK)malloc(sizeof(LINKEDLIST));	
-	heapTree(&root,11);
-	heapTree(&root,10);
-	heapTree(&root,12);
-
+	insertNode(&root,10);
+	insertNode(&root,11);
+	insertNode(&root,12);
 	printf("  PREORDER : ");
-	preorder(root);
+	root->order[0](root);
 	printf("  POSTORDER : ");
-	postorder(root);
+	root->order[1](root);
 	printf("  INORDER : ");
-	inorder(root);
-
-//	init( head, tail );
-//	appendList( head, newList(4) );
-//	appendList( head, newList(3) );
-//	appendList( head, newList(2) );
-//	appendList( head, newList(1) );
-//	deleteList( head, findList( head, 1 ) );
-//	deleteList( head, findList( head, 3 ) );
-//	printList(head,tail);
-//	free(head);
-//	free(tail);
+	root->order[2](root);
+//	printf("  PREORDER : ");
+//	preorder(root);
+//	printf("  POSTORDER : ");
+//	postorder(root);
+//	printf("  INORDER : ");
+//	inorder(root);
 }
 /*
 void main(){
@@ -246,16 +308,6 @@ int main(int arc, int **argv){
 	int a[3][3] = {{1,2,3},{10,20,30},{100,200,300}};
 	int (*pa)[3];
 	pa = a;
-
-	//int **p = a[3][3];
-	/*
-	for(row = 0;row<3;row++){
-		for(col = 0;col<3;col++){
-			printf("%p",a[row][col]);
-		}
-	}
-	printf("%p\n",pa++);
-	printf("%p",pa);
 }
 */
 
